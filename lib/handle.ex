@@ -48,22 +48,22 @@ defmodule S5.Handle do
   end
 
   def process_hs({:connect, _bin}, %{src_fd: socket} = data) do
-    :gen_tcp.send(socket, Handshake.ans_auth())
+    :gen_tcp.send(socket, Handshake.rep_success())
     {:keep_state, data}
   end
   def process_hs({:question_auth, _bin}, %{src_fd: socket} = data) do
-    :gen_tcp.send(socket, Handshake.ans_auth())
+    :gen_tcp.send(socket, Handshake.rep_success())
     {:keep_state, data}
   end
   def process_hs({:auth_req, _bin}, %{src_fd: socket} = data) do
-    :gen_tcp.send(socket, Handshake.ans_auth(Handshake.user_pass_auth))
+    :gen_tcp.send(socket, Handshake.rep_success())
     {:keep_state, data}
   end
   def process_hs({:auth, <<_, u_len, username::binary-size(u_len), p_len, passwd::binary-size(p_len)>>},
     %{src_fd: socket} = data) do
     # verify user, passwd here
     Logger.debug("USER=#{username} PASSWD=#{inspect(passwd)}")
-    :gen_tcp.send(socket, Handshake.ans_auth())
+    :gen_tcp.send(socket, Handshake.rep_success())
     {:keep_state, data}
   end
   def process_hs({:associate, <<_, _, _, addr_type, ip1, ip2, ip3, ip4, port::16>>}, data) do
@@ -107,6 +107,10 @@ defmodule S5.Handshake do
 
   def no_auth, do: 0
   def user_pass_auth, do: 2
+
+  def rep_success() do
+    <<@socks_ver, 0>>
+  end
 
   def ans_auth(auth \\ @no_auth) do
     <<@socks_ver, auth>>
